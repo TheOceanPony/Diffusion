@@ -143,6 +143,7 @@ def reconstruction(Phi, N, g, q, Res, t_max):
         Res[t] = np.argmax(foo1)
 
     
+    # Weight sum check
     for k in [0, 1]:
         _sum = 0
         for t in range(0, t_max):
