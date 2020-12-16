@@ -56,8 +56,8 @@ def get_borders_ind(w, h):
 
 
 def init_k(img):
-    # return np.zeros(img.shape[0], dtype=np.uint8)
-    return np.random.randint( 2, size=(img.shape[0],2), dtype=np.uint8 )
+     return np.zeros(img.shape[0], dtype=np.uint8)
+    # return np.random.randint( 2, size=(img.shape[0],2), dtype=np.uint8 )
 
 
 def init_g(alpha):
@@ -84,7 +84,8 @@ def init_q(img):
 
 
 @njit
-def iteration(N, K, Phi, g, q, t_max):
+def iteration(N, Phi, g, q, t_max):
+    K = np.zeros((t_max,2), dtype=np.uint8)
 
     for t in range(0, t_max):
         for k in [0, 1]:
@@ -116,11 +117,11 @@ def iteration(N, K, Phi, g, q, t_max):
                     t_pos = np.where(N[t_n] == t)[0][0]
                     Phi[t, t_posn, k] = g[k, K[t_n, k]] - Phi[t_n, t_pos, K[t_n, k]] - C
 
+
     return Phi
         
-  
-def reconstruction(Phi, N, g, q, Res, t_max):
 
+def reconstruction(Phi, N, g, q, Res, t_max):
     for t in range(0, t_max):
 
         t_n = [x for x in N[t] if x >= 0][0] # Existing neighbour
@@ -140,5 +141,20 @@ def reconstruction(Phi, N, g, q, Res, t_max):
             foo1[k] = np.max(foo2)
 
         Res[t] = np.argmax(foo1)
+
+    
+    for k in [0, 1]:
+        _sum = 0
+        for t in range(0, t_max):
+            _sum += q[t, k]
+
+            temp = 0
+            for t_n in N[t]:
+                t_posn = np.where(N[t] == t_n)[0][0] 
+                temp += Phi[t, t_posn, k]
+
+            _sum += temp        
+
+        print(f"{k, t} | sum: {_sum}")
 
     return Res
