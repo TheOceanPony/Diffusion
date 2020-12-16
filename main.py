@@ -20,12 +20,12 @@ if __name__ == '__main__':
     N = f.init_neighbours(width, height)
     K = f.init_k(img)
 
-    for iter in range(0, 5):
+    for iter in range(0, 10):
+        print(f"iter {iter}")
+        Phi = f.iteration(N, K, Phi, g, q, t_max)
+        
 
-        print(f"iteration: {iter+1}")
-        K_next, Res = f.iteration(N, K, Phi, Res, g, q, t_max)
-        imsave(f"data/results/res{iter+1}.png", ( Res.reshape((width, height)))*255 )
-        K = K_next
 
-    # imsave(f"data/results/test.png", K1.reshape((width, height)) - K.reshape((width, height)))
-    print(f"K1 shape: {Res.shape} | min, max: {np.min(Res), np.max(Res)} | dtype: {Res.dtype}")
+    Img = f.reconstruction(Phi, N, g, q, Res, t_max)
+    imsave(f"data/results/res{iter+1}.png", ( Img.reshape((width, height)))*255 )
+    print(f"K1 shape: {Img.shape} | min, max: {np.min(Img), np.max(Img)} | dtype: {Img.dtype}")
