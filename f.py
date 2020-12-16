@@ -56,7 +56,7 @@ def get_borders_ind(w, h):
 
 
 def init_k(img):
-     return np.zeros(img.shape[0], dtype=np.uint8)
+     return np.zeros(img.shape[0])
     # return np.random.randint( 2, size=(img.shape[0],2), dtype=np.uint8 )
 
 
@@ -87,9 +87,9 @@ def init_q(img):
 def iteration(N, Phi, g, q, t_max):
     K = np.zeros((t_max,2), dtype=np.uint8)
 
-    for t in range(0, t_max):
-        for k in [0, 1]:
-
+    for k in [0, 1]:
+        for t in range(0, t_max):
+        
             # K*
             for t_n in N[t]:
                 if t_n != -1:
@@ -99,14 +99,15 @@ def iteration(N, Phi, g, q, t_max):
                         t_posn = np.where(N[t] == t_n)[0][0]
                         foo[k_n] = g[k, k_n] - Phi[t_n, t_pos, k_n]
 
-                    K[t_n, k] = foo.index(max(foo))  
+                    K[t_n, k] = foo.index(max(foo))
 
             # C
             C, nb_amnt = q[t, k], 0
             for t_n in N[t]:
                 if t_n != -1:
                     t_pos = np.where(N[t_n] == t)[0][0]
-                    C += g[k, K[t_n, k]] - Phi[t_n, t_pos, K[t_n, k]]
+                    t_posn = np.where(N[t] == t_n)[0][0]
+                    C += g[k, K[t_n, k]] - Phi[t, t_posn, k] - Phi[t_n, t_pos, K[t_n, k]]
                     nb_amnt += 1
             C = C/nb_amnt
 
@@ -143,7 +144,7 @@ def reconstruction(Phi, N, g, q, Res, t_max):
         Res[t] = np.argmax(foo1)
 
     
-    # Weight sum check
+    # q check
     for k in [0, 1]:
         _sum = 0
         for t in range(0, t_max):
@@ -151,11 +152,34 @@ def reconstruction(Phi, N, g, q, Res, t_max):
 
             temp = 0
             for t_n in N[t]:
-                t_posn = np.where(N[t] == t_n)[0][0] 
-                temp += Phi[t, t_posn, k]
+                if t_n != -1:
+                    t_posn = np.where(N[t] == t_n)[0][0] 
+                    temp += Phi[t, t_posn, k]
 
             _sum += temp        
 
         print(f"{k, t} | sum: {_sum}")
 
+
+    # G check
+    for k in [0, 1]:
+        for t in range(0, t_max):
+        
+            g_max = []
+            for t_n in N[t]:
+                if t_n != -1:
+
+                    foo = []
+                    t_posn = np.where(N[t] == t_n)[0][0]
+                    t_pos = np.where(N[t_n] == t)[0][0] 
+                    for k_n in [0, 1]:
+                       foo.append( g[k, k_n] - Phi[t, t_posn, k] - Phi[t_n, t_pos, k_n] )
+
+                    g_max.append( max(foo) )
+            
+
+            if t % 1000 == 0:
+                print(f"[{t}, {k}]  |  g_tt': {g_max}")
+            
+                    
     return Res
