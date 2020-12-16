@@ -56,12 +56,12 @@ def get_borders_ind(w, h):
 
 
 def init_k(img):
-    # return np.zeros((img.shape[0], 2), dtype=np.uint8)
-    return np.random.randint( 2, size=(img.shape[0], 2), dtype=np.uint8 )
+    # return np.zeros(img.shape[0], dtype=np.uint8)
+    return np.random.randint( 2, size=(img.shape[0],2), dtype=np.uint8 )
 
 
 def init_g(alpha):
-    return np.array([[-alpha, 0], [0, -alpha]])
+    return np.array([[alpha, 0], [0, alpha]])
 
 
 def init_q(img):
@@ -84,7 +84,7 @@ def init_q(img):
 
 
 @njit
-def iteration(N, K, Phi, Res, g, q, t_max):
+def iteration(N, K, Phi, g, q, t_max):
 
     for t in range(0, t_max):
         for k in [0, 1]:
@@ -96,7 +96,7 @@ def iteration(N, K, Phi, Res, g, q, t_max):
                     for k_n in [0, 1]:
                         t_pos = np.where(N[t_n] == t)[0][0]
                         t_posn = np.where(N[t] == t_n)[0][0]
-                        foo[k_n] = g[k, k_n] - Phi[t, t_posn, k] - Phi[t_n, t_pos, k_n]
+                        foo[k_n] = g[k, k_n] - Phi[t_n, t_pos, k_n]
 
                     K[t_n, k] = foo.index(max(foo))  
 
@@ -116,20 +116,29 @@ def iteration(N, K, Phi, Res, g, q, t_max):
                     t_pos = np.where(N[t_n] == t)[0][0]
                     Phi[t, t_posn, k] = g[k, K[t_n, k]] - Phi[t_n, t_pos, K[t_n, k]] - C
 
-    # Res
-    for t in range(0, t_max):
-        t_n = [x for x in N[t] if x >= 0][0]
-        _k = np.argmax( K[t] )
+    return Phi
+        
+  
+def reconstruction(Phi, N, g, q, Res, t_max):
 
+    for t in range(0, t_max):
+
+        t_n = [x for x in N[t] if x >= 0][0] # Existing neighbour
+        
         t_posn = np.where(N[t] == t_n)[0][0]
         t_pos = np.where(N[t_n] == t)[0][0] 
 
-        foo = [-1, -1]
-        foo[0] = g[_k, 0] - Phi[t_n, t_pos, 0]
-        foo[1] = g[_k, 1] - Phi[t_n, t_pos, 1]
+        foo1 = np.array([-1, -1])
+        for k in [0, 1]:
 
-        Res[t] = foo.index(max(foo))  
+            foo2 = np.array([-1, -1])
+            
+            for k_n in [0, 1]:
 
-    return K, Res
+                foo2[k_n] = g[k, k_n] - Phi[t, t_posn, k] - Phi[t_n, t_pos, k_n]
 
+            foo1[k] = np.max(foo2)
 
+        Res[t] = np.argmax(foo1)
+
+    return Res
